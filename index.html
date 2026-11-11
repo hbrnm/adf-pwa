@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ADF">
+  <meta name="theme-color" content="#000000">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <title>ADF Protocol</title>
+  <style>
+    :root {
+      --bg: #000000;
+      --card: #1C1C1E;
+      --card-elevated: #2C2C2E;
+      --sep: #38383A;
+      --text: #FFFFFF;
+      --text-sec: #8E8E93;
+      --text-ter: #636366;
+      --green: #32D74B;
+      --orange: #FF9F0A;
+      --red: #FF453A;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", sans-serif;
+      font-variant-numeric: tabular-nums;
+      -webkit-font-smoothing: antialiased;
+      padding-top: calc(env(safe-area-inset-top, 16px) + 12px);
+      padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 84px);
+      max-width: 480px;
+      margin: 0 auto;
+      user-select: none;
+    }
+    header {
+      padding: 0 16px 12px;
+    }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 14px;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    .avg-badge {
+      font-size: 13px;
+      color: var(--text-sec);
+    }
+    /* Segmented Control */
+    .segmented {
+      display: flex;
+      background: var(--card);
+      padding: 2px;
+      border-radius: 9px;
+      margin-bottom: 16px;
+    }
+    .seg-btn {
+      flex: 1;
+      border: none;
+      background: transparent;
+      color: var(--text-sec);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 0;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .seg-btn.active {
+      background: var(--card-elevated);
+      color: var(--text);
+      font-weight: 600;
+    }
+    /* Day Selector */
+    .day-strip {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      padding: 0 16px 16px;
+    }
+    .day-pill {
+      background: var(--card);
+      border: 1px solid transparent;
+      border-radius: 10px;
+      padding: 8px 0;
+      text-align: center;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+    .day-pill.active {
+      background: var(--card-elevated);
+      border-color: var(--sep);
+    }
+    .day-pill span {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-sec);
+    }
+    .day-pill.active span {
+      color: var(--text);
+    }
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+    .dot.feast { background: var(--green); }
+    .dot.fast { background: var(--orange); }
+
+    /* Content Sections */
+    .container {
+      padding: 0 16px;
+    }
+    .summary-card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .summary-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .day-type {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+    .day-type.feast { color: var(--green); }
+    .day-type.fast { color: var(--orange); }
+    .progress-label {
+      font-size: 13px;
+      color: var(--text-sec);
+    }
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--sep);
+    }
+    .metric-val {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+    .metric-lbl {
+      font-size: 12px;
+      color: var(--text-sec);
+      margin-top: 2px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--text-sec);
+      letter-spacing: 0.4px;
+      margin: 20px 0 8px 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .group-list {
+      background: var(--card);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .list-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 13px 16px;
+      cursor: pointer;
+      position: relative;
+    }
+    .list-item:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 44px;
+      right: 0;
+      height: 0.5px;
+      background: var(--sep);
+    }
+    .check-circle {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 1.5px solid var(--text-ter);
+      flex-shrink: 0;
+      margin-top: 1px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+    .list-item.done .check-circle {
+      background: var(--green);
+      border-color: var(--green);
+    }
+    .check-circle svg {
+      width: 12px;
+      height: 12px;
+      stroke: #000;
+      stroke-width: 2.5;
+      fill: none;
+      opacity: 0;
+    }
+    .list-item.done .check-circle svg {
+      opacity: 1;
+    }
+    .item-body {
+      flex: 1;
+    }
+    .item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 3px;
+    }
+    .item-title {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text);
+    }
+    .list-item.done .item-title,
+    .list-item.done .item-desc {
+      color: var(--text-ter);
+      text-decoration: line-through;
+    }
+    .item-meta {
+      font-size: 12px;
+      color: var(--text-sec);
+    }
+    .item-desc {
+      font-size: 13px;
+      color: var(--text-sec);
+      line-height: 1.4;
+    }
+
+    /* Weight & Backup */
+    .input-card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .input-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    input[type="number"], input[type="date"] {
+      background: var(--card-elevated);
+      border: none;
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: inherit;
+      flex: 1;
+    }
+    .btn-primary {
+      background: var(--text);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-secondary {
+      background: var(--card-elevated);
+      color: var(--text);
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    /* Bottom Rest Timer Bar */
+    .timer-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(28, 28, 30, 0.92);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 0.5px solid var(--sep);
+      padding: 10px 16px calc(env(safe-area-inset-bottom, 12px) + 10px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    .timer-display {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+      min-width: 68px;
+    }
+    .timer-btns {
+      display: flex;
+      gap: 6px;
+    }
+    .t-btn {
+      background: var(--card-elevated);
+      color: var(--text);
+      border: none;
+      border-radius: 7px;
+      padding: 7px 11px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .t-btn.active {
+      background: var(--green);
+      color: #000;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-top">
+      <h1>ADF Protocol</h1>
+      <span class="avg-badge">Medie: 1.714 kcal/zi</span>
+    </div>
+    <div class="segmented">
+      <button class="seg-btn active" onclick="switchTab('plan')">Ziua Curentă</button>
+      <button class="seg-btn" onclick="switchTab('shop')">Cumpărături</button>
+      <button class="seg-btn" onclick="switchTab('weight')">Cântărire</button>
+    </div>
+  </header>
+
+  <div id="tab-plan">
+    <div class="day-strip" id="day-strip"></div>
+    <div class="container" id="day-content"></div>
+  </div>
+
+  <div id="tab-shop" class="container" style="display:none;"></div>
+  <div id="tab-weight" class="container" style="display:none;"></div>
+
+  <div class="timer-bar">
+    <div>
+      <div style="font-size:11px;color:var(--text-sec);">PAUZĂ SERII</div>
+      <div class="timer-display" id="timer-val">00:00</div>
+    </div>
+    <div class="timer-btns">
+      <button class="t-btn" onclick="startTimer(60)">1:00</button>
+      <button class="t-btn" onclick="startTimer(90)">1:30</button>
+      <button class="t-btn" onclick="startTimer(120)">2:00</button>
+      <button class="t-btn" onclick="stopTimer()" style="color:var(--text-sec);">Reset</button>
+    </div>
+  </div>
+
+  <script>
+    const DAYS = [
+      {
+        id: 'luni', short: 'L', name: 'Luni', type: 'feast', label: 'Hrănire',
+        kcal: 2550, prot: 195, workoutTitle: 'Upper 1 — Intensitate Normală (6–10 rep)',
+        meals: [
+          { id: 'l_m1', time: '08:30', name: 'Mic dejun', desc: '60g ovăz în apă + 30g whey + 15g nuci + 100g fructe pădure', meta: '520 kcal · 40g P' },
+          { id: 'l_m2', time: '13:30', name: 'Prânz', desc: '230g piept pui + 220g orez basmati fiert + 200g salată + 1 lg ulei măsline', meta: '780 kcal · 62g P' },
+          { id: 'l_m3', time: '17:30', name: 'Pre-Antrenament', desc: '2 felii pâine secară cu maia + 4 ouă + 150g cottage cheese 2%', meta: '640 kcal · 48g P' },
+          { id: 'l_m4', time: '20:30', name: 'Cină Post-Sală', desc: '200g somon la cuptor + 300g legume la grătar', meta: '610 kcal · 45g P' }
+        ],
+        exercises: [
+          { id: 'l_e1', name: 'Împins piept înclinat (gantere/aparat)', sets: '4 × 8', desc: 'Pauză 90–120s, control pe coborâre' },
+          { id: 'l_e2', name: 'Ramat cu sprijin pe piept', sets: '4 × 8', desc: 'Zero tensiune lombară' },
+          { id: 'l_e3', name: 'Împins umeri din șezând', sets: '3 × 10', desc: 'Spătar fixat' },
+          { id: 'l_e4', name: 'Tracțiuni la helcometru', sets: '3 × 10', desc: 'Priză medie/neutră' },
+          { id: 'l_e5', name: 'Biceps + Triceps la cablu', sets: '3 × 10', desc: 'Superset final' }
+        ]
+      },
+      {
+        id: 'marti', short: 'Ma', name: 'Marți', type: 'fast', label: 'Post Modificat',
+        kcal: 600, prot: 106, workoutTitle: 'Lower 1 — Protecție Articulară (12–15 rep, RIR 2)',
+        meals: [
+          { id: 'ma_m1', time: '07:00–16:30', name: 'Hidratare & Post', desc: 'Apă, cafea neagră, ceai neîndulcit', meta: '0 kcal' },
+          { id: 'ma_m2', time: '16:30', name: 'Combustibil Pre-Sală', desc: '30g izolat proteic whey + 1 felie pâine secară maia (50g) + 500ml apă cu 1/2 lgț sare', meta: '240 kcal · 28g P' },
+          { id: 'ma_m3', time: '20:00', name: 'Cină Post-Sală', desc: '220g piept pui grătar + 150g albușuri ou + 250g castraveți/roșii', meta: '360 kcal · 78g P' }
+        ],
+        exercises: [
+          { id: 'ma_e1', name: 'Flexii femurale din culcat', sets: '3 × 15', desc: 'Primul exercițiu — lubrifiere genunchi' },
+          { id: 'ma_e2', name: 'Presă picioare (tălpi sus pe platformă)', sets: '3 × 12–15', desc: 'Spate sprijinit, nu bloca genunchii' },
+          { id: 'ma_e3', name: 'Extensii cvadriceps la aparat', sets: '3 × 15', desc: '1 secundă contracție sus' },
+          { id: 'ma_e4', name: 'Hiperextensii lombare / fesieri 45°', sets: '2 × 15', desc: 'Doar greutatea corpului, controlat' },
+          { id: 'ma_e5', name: 'Gambe la presă', sets: '2 × 15–20', desc: 'Pauză 60s' }
+        ]
+      },
+      {
+        id: 'miercuri', short: 'Mi', name: 'Miercuri', type: 'feast', label: 'Hrănire',
+        kcal: 2550, prot: 195, workoutTitle: 'Cardio Zona 2 & Recuperare',
+        meals: [
+          { id: 'mi_m1', time: '08:30', name: 'Mic dejun', desc: '60g ovăz în apă + 30g whey + 15g nuci + 100g fructe pădure', meta: '520 kcal · 40g P' },
+          { id: 'mi_m2', time: '13:30', name: 'Prânz', desc: '230g curcan/pui + 250g cartofi copți + 200g salată + 1 lg ulei măsline', meta: '780 kcal · 62g P' },
+          { id: 'mi_m3', time: '17:30', name: 'Gustare', desc: '2 felii pâine secară cu maia + 4 ouă + 150g cottage cheese 2%', meta: '640 kcal · 48g P' },
+          { id: 'mi_m4', time: '20:30', name: 'Cină', desc: '200g somon/păstrăv cuptor + 300g broccoli/dovlecei', meta: '610 kcal · 45g P' }
+        ],
+        exercises: [
+          { id: 'mi_e1', name: 'Mers înclinat pe bandă', sets: '35–40 min', desc: 'Înclinație 13%, viteză 3.5 km/h (Zona 2)' }
+        ]
+      },
+      {
+        id: 'joi', short: 'J', name: 'Joi', type: 'fast', label: 'Post Modificat',
+        kcal: 600, prot: 106, workoutTitle: 'Upper 2 — Pump & Aparate (12–15 rep, RIR 2)',
+        meals: [
+          { id: 'j_m1', time: '07:00–16:30', name: 'Hidratare & Post', desc: 'Apă, cafea neagră, ceai neîndulcit', meta: '0 kcal' },
+          { id: 'j_m2', time: '16:30', name: 'Combustibil Pre-Sală', desc: '30g izolat proteic whey + 1 felie pâine secară maia (50g) + 500ml apă cu 1/2 lgț sare', meta: '240 kcal · 28g P' },
+          { id: 'j_m3', time: '20:00', name: 'Cină Post-Sală', desc: '220g piept pui grătar + 150g albușuri ou + 250g salată verde', meta: '360 kcal · 78g P' }
+        ],
+        exercises: [
+          { id: 'j_e1', name: 'Ramat la aparat cu sprijin pe piept', sets: '3 × 12', desc: 'Protejează zona lombară' },
+          { id: 'j_e2', name: 'Împins piept la aparat', sets: '3 × 12', desc: 'Traiectorie ghidată, tempo 3s negativ' },
+          { id: 'j_e3', name: 'Tracțiuni helcometru priză neutră', sets: '3 × 12–15', desc: 'Stres minim pe umeri' },
+          { id: 'j_e4', name: 'Fluturări laterale din șezând', sets: '3 × 15', desc: 'Fără balans din trunchi' },
+          { id: 'j_e5', name: 'Superset Biceps cablu + Triceps sfoară', sets: '2 × 15', desc: 'Pauză 60s' }
+        ]
+      },
+      {
+        id: 'vineri', short: 'V', name: 'Vineri', type: 'feast', label: 'Hrănire',
+        kcal: 2550, prot: 195, workoutTitle: 'Lower 2 — Intensitate Normală (8–12 rep)',
+        meals: [
+          { id: 'v_m1', time: '08:30', name: 'Mic dejun', desc: '60g ovăz în apă + 30g whey + 15g nuci + 100g fructe pădure', meta: '520 kcal · 40g P' },
+          { id: 'v_m2', time: '13:30', name: 'Prânz', desc: '230g piept pui + 220g orez basmati fiert + 200g salată + 1 lg ulei măsline', meta: '780 kcal · 62g P' },
+          { id: 'v_m3', time: '17:30', name: 'Pre-Antrenament', desc: '2 felii pâine secară cu maia + 4 ouă + 150g cottage cheese 2%', meta: '640 kcal · 48g P' },
+          { id: 'v_m4', time: '20:30', name: 'Cină Post-Sală', desc: '200g mușchiuleț vită/porc slab + 300g legume grătar + 1 lg ulei', meta: '610 kcal · 45g P' }
+        ],
+        exercises: [
+          { id: 'v_e1', name: 'Îndreptări cu Trap Bar / RDL cu gantere', sets: '4 × 8', desc: 'Spate neutru, controlat' },
+          { id: 'v_e2', name: 'Presă pentru picioare', sets: '4 × 8–10', desc: 'Greutate de lucru, fără blocarea genunchilor' },
+          { id: 'v_e3', name: 'Flexii femurale din șezând', sets: '3 × 10', desc: 'Control pe excentric' },
+          { id: 'v_e4', name: 'Extensii cvadriceps', sets: '3 × 12', desc: 'Contracție 1s sus' },
+          { id: 'v_e5', name: 'Gambe + Abdomen', sets: '3 × 12', desc: 'Final de săptămână' }
+        ]
+      },
+      {
+        id: 'sambata', short: 'S', name: 'Sâmbătă', type: 'fast', label: 'Post Modificat',
+        kcal: 600, prot: 106, workoutTitle: 'Cardio Zona 2',
+        meals: [
+          { id: 's_m1', time: '08:00–14:30', name: 'Hidratare & Post', desc: 'Apă cu un praf de sare, cafea neagră, ceai', meta: '0 kcal' },
+          { id: 's_m2', time: '14:30', name: 'Masa 1', desc: '200g piept pui grătar + 200g salată verde cu oțet balsamic', meta: '280 kcal · 54g P' },
+          { id: 's_m3', time: '19:30', name: 'Masa 2', desc: '250g albușuri ou + 1 ou întreg (omletă) + 100g cottage cheese 2%', meta: '320 kcal · 52g P' }
+        ],
+        exercises: [
+          { id: 's_e1', name: 'Mers înclinat pe bandă sau Bicicletă', sets: '40–45 min', desc: 'Ritm constant în Zona 2' }
+        ]
+      },
+      {
+        id: 'duminica', short: 'D', name: 'Duminică', type: 'feast', label: 'Hrănire',
+        kcal: 2550, prot: 195, workoutTitle: 'Odihnă Totală & Refacere Glicogen',
+        meals: [
+          { id: 'd_m1', time: '09:00', name: 'Mic dejun', desc: '60g ovăz în apă + 30g whey + 15g nuci + 100g fructe pădure', meta: '520 kcal · 40g P' },
+          { id: 'd_m2', time: '14:00', name: 'Prânz', desc: '230g pui/curcan + 220g orez basmati fiert + 200g salată + 1 lg ulei măsline', meta: '780 kcal · 62g P' },
+          { id: 'd_m3', time: '17:30', name: 'Gustare', desc: '2 felii pâine secară cu maia + 4 ouă + 150g cottage cheese 2%', meta: '640 kcal · 48g P' },
+          { id: 'd_m4', time: '20:30', name: 'Cină', desc: '200g somon la cuptor + 300g legume la abur/grătar', meta: '610 kcal · 45g P' }
+        ],
+        exercises: [
+          { id: 'd_e1', name: 'Recuperare activă / Plimbare ușoară', sets: 'Opțional', desc: 'Pregătire pentru Upper 1 de Luni' }
+        ]
+      }
+    ];
+
+    const SHOPPING = [
+      { id: 'sh_1', cat: 'Proteine', name: 'Piept de pui / curcan', qty: '1.6 kg' },
+      { id: 'sh_2', cat: 'Proteine', name: 'Somon / Păstrăv / Vită slabă', qty: '800 g' },
+      { id: 'sh_3', cat: 'Proteine', name: 'Ouă întregi', qty: '18 buc' },
+      { id: 'sh_4', cat: 'Proteine', name: 'Albușuri de ou pasteurizate', qty: '550 g' },
+      { id: 'sh_5', cat: 'Proteine', name: 'Cottage Cheese 2% / Brânză slabă', qty: '700 g' },
+      { id: 'sh_6', cat: 'Proteine', name: 'Izolat proteic Whey', qty: '180 g (6 cupe)' },
+      { id: 'sh_7', cat: 'Carbohidrați & Grăsimi', name: 'Pâine de secară cu maia', qty: '1 pâine (10 felii)' },
+      { id: 'sh_8', cat: 'Carbohidrați & Grăsimi', name: 'Fulgi de ovăz', qty: '240 g' },
+      { id: 'sh_9', cat: 'Carbohidrați & Grăsimi', name: 'Orez basmati & Cartofi', qty: '350 g orez + 250 g cartofi' },
+      { id: 'sh_10', cat: 'Carbohidrați & Grăsimi', name: 'Fructe de pădure & Nuci', qty: '400 g fructe + 60 g nuci' },
+      { id: 'sh_11', cat: 'Legume', name: 'Salată verde, castraveți, roșii, broccoli', qty: '~2.5 kg total' }
+    ];
+
+    let state = { checks: {}, weights: [] };
+    try {
+      const saved = localStorage.getItem('adf_ios_state_v2');
+      if (saved) state = JSON.parse(saved);
+    } catch (e) {}
+
+    function saveState() {
+      try {
+        localStorage.setItem('adf_ios_state_v2', JSON.stringify(state));
+      } catch (e) {}
+    }
+
+    const jsDay = new Date().getDay();
+    let currentDayIdx = jsDay === 0 ? 6 : jsDay - 1;
+
+    function renderDayStrip() {
+      const strip = document.getElementById('day-strip');
+      strip.innerHTML = DAYS.map((d, i) => `
+        <div class="day-pill ${i === currentDayIdx ? 'active' : ''}" onclick="selectDay(${i})">
+          <span>${d.short}</span>
+          <div class="dot ${d.type}"></div>
+        </div>
+      `).join('');
+    }
+
+    function selectDay(idx) {
+      currentDayIdx = idx;
+      renderDayStrip();
+      renderDayContent();
+    }
+
+    function toggleItem(id) {
+      state.checks[id] = !state.checks[id];
+      saveState();
+      renderDayContent();
+      renderShopping();
+    }
+
+    function resetCurrentDay() {
+      const d = DAYS[currentDayIdx];
+      d.meals.forEach(m => delete state.checks[m.id]);
+      d.exercises.forEach(e => delete state.checks[e.id]);
+      saveState();
+      renderDayContent();
+    }
+
+    function renderDayContent() {
+      const d = DAYS[currentDayIdx];
+      const totalItems = d.meals.length + d.exercises.length;
+      const doneItems = d.meals.filter(m => state.checks[m.id]).length + d.exercises.filter(e => state.checks[e.id]).length;
+
+      const checkSvg = `<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+
+      document.getElementById('day-content').innerHTML = `
+        <div class="summary-card">
+          <div class="summary-top">
+            <div class="day-type ${d.type}">
+              <div class="dot ${d.type}"></div>
+              <span>${d.name} · ${d.label}</span>
+            </div>
+            <div class="progress-label">${doneItems}/${totalItems} completate</div>
+          </div>
+          <div class="metrics-row">
+            <div>
+              <div class="metric-val">${d.kcal}</div>
+              <div class="metric-lbl">kcal țintă</div>
+            </div>
+            <div>
+              <div class="metric-val">${d.prot}g</div>
+              <div class="metric-lbl">Proteine</div>
+            </div>
+            <div>
+              <div class="metric-val">${d.type === 'fast' ? 'Peri-Sală' : '4 Mese'}</div>
+              <div class="metric-lbl">Timing</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title">
+          <span>Plan Alimentar</span>
+          <span style="text-transform:none;cursor:pointer;" onclick="resetCurrentDay()">Resetează ziua</span>
+        </div>
+        <div class="group-list">
+          ${d.meals.map(m => `
+            <div class="list-item ${state.checks[m.id] ? 'done' : ''}" onclick="toggleItem('${m.id}')">
+              <div class="check-circle">${checkSvg}</div>
+              <div class="item-body">
+                <div class="item-header">
+                  <span class="item-title">${m.time} · ${m.name}</span>
+                  <span class="item-meta">${m.meta}</span>
+                </div>
+                <div class="item-desc">${m.desc}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="section-title">
+          <span>${d.workoutTitle}</span>
+        </div>
+        <div class="group-list">
+          ${d.exercises.map(e => `
+            <div class="list-item ${state.checks[e.id] ? 'done' : ''}" onclick="toggleItem('${e.id}')">
+              <div class="check-circle">${checkSvg}</div>
+              <div class="item-body">
+                <div class="item-header">
+                  <span class="item-title">${e.name}</span>
+                  <span class="item-meta">${e.sets}</span>
+                </div>
+                <div class="item-desc">${e.desc}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function renderShopping() {
+      const checkSvg = `<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+      document.getElementById('tab-shop').innerHTML = `
+        <div class="section-title">
+          <span>Listă Săptămânală</span>
+          <span style="text-transform:none;cursor:pointer;" onclick="resetShop()">Debifează tot</span>
+        </div>
+        <div class="group-list">
+          ${SHOPPING.map(s => `
+            <div class="list-item ${state.checks[s.id] ? 'done' : ''}" onclick="toggleItem('${s.id}')">
+              <div class="check-circle">${checkSvg}</div>
+              <div class="item-body">
+                <div class="item-header">
+                  <span class="item-title">${s.name}</span>
+                  <span class="item-meta">${s.qty}</span>
+                </div>
+                <div class="item-desc">${s.cat}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function resetShop() {
+      SHOPPING.forEach(s => delete state.checks[s.id]);
+      saveState();
+      renderShopping();
+    }
+
+    function renderWeight() {
+      const today = new Date().toISOString().split('T')[0];
+      const listHtml = state.weights.slice().reverse().map((w, idx, arr) => {
+        const prev = arr[idx + 1];
+        let deltaStr = '';
+        if (prev) {
+          const diff = (w.kg - prev.kg).toFixed(1);
+          const color = diff <= 0 ? 'var(--green)' : 'var(--orange)';
+          deltaStr = `<span style="color:${color};margin-left:8px;">${diff > 0 ? '+' : ''}${diff} kg</span>`;
+        }
+        return `
+          <div class="list-item" style="cursor:default;">
+            <div class="item-body">
+              <div class="item-header">
+                <span class="item-title">${w.kg.toFixed(1)} kg ${deltaStr}</span>
+                <span class="item-meta">${w.date}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('') || `<div class="list-item"><div class="item-desc">Nicio cântărire salvată încă.</div></div>`;
+
+      document.getElementById('tab-weight').innerHTML = `
+        <div class="input-card">
+          <div style="font-size:15px;font-weight:600;">Cântărire Oficială (Luni & Joi dimineața)</div>
+          <div style="font-size:13px;color:var(--text-sec);margin-top:4px;">După zilele de hrănire, pentru o evaluare reală a apei și glicogenului.</div>
+          <div class="input-row">
+            <input type="date" id="w-date" value="${today}">
+            <input type="number" id="w-kg" step="0.1" placeholder="105.0">
+            <button class="btn-primary" onclick="addWeight()">Salvează</button>
+          </div>
+        </div>
+
+        <div class="section-title"><span>Istoric Greutate</span></div>
+        <div class="group-list">${listHtml}</div>
+
+        <div class="section-title"><span>Backup Date</span></div>
+        <div class="input-card" style="display:flex;gap:8px;">
+          <button class="btn-secondary" style="flex:1;" onclick="exportBackup()">Export JSON</button>
+          <button class="btn-secondary" style="flex:1;" onclick="document.getElementById('import-file').click()">Import JSON</button>
+          <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importBackup(event)">
+        </div>
+      `;
+    }
+
+    function addWeight() {
+      const date = document.getElementById('w-date').value;
+      const kg = parseFloat(document.getElementById('w-kg').value);
+      if (!date || isNaN(kg)) return;
+      state.weights.push({ date, kg });
+      saveState();
+      renderWeight();
+    }
+
+    function exportBackup() {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'adf-backup.json';
+      a.click();
+    }
+
+    function importBackup(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          state = JSON.parse(ev.target.result);
+          saveState();
+          renderDayContent();
+          renderShopping();
+          renderWeight();
+        } catch (err) {}
+      };
+      reader.readAsText(file);
+    }
+
+    function switchTab(tab) {
+      const tabs = ['plan', 'shop', 'weight'];
+      tabs.forEach((t, i) => {
+        document.getElementById('tab-' + t).style.display = (t === tab) ? 'block' : 'none';
+        document.querySelectorAll('.seg-btn')[i].classList.toggle('active', t === tab);
+      });
+    }
+
+    // Wall-clock Rest Timer
+    let timerEnd = 0;
+    let timerInt = null;
+
+    function startTimer(sec) {
+      timerEnd = Date.now() + sec * 1000;
+      if (timerInt) clearInterval(timerInt);
+      updateTimerDisplay();
+      timerInt = setInterval(updateTimerDisplay, 250);
+    }
+
+    function stopTimer() {
+      timerEnd = 0;
+      if (timerInt) clearInterval(timerInt);
+      document.getElementById('timer-val').textContent = '00:00';
+      document.getElementById('timer-val').style.color = 'var(--text)';
+    }
+
+    function updateTimerDisplay() {
+      const rem = Math.max(0, Math.ceil((timerEnd - Date.now()) / 1000));
+      const m = String(Math.floor(rem / 60)).padStart(2, '0');
+      const s = String(rem % 60).padStart(2, '0');
+      const el = document.getElementById('timer-val');
+      el.textContent = `${m}:${s}`;
+      el.style.color = rem === 0 ? 'var(--green)' : 'var(--text)';
+      if (rem === 0 && timerInt) {
+        clearInterval(timerInt);
+      }
+    }
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+
+    renderDayStrip();
+    renderDayContent();
+    renderShopping();
+    renderWeight();
+  </script>
+</body>
+</html>
